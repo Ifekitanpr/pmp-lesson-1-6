@@ -3044,6 +3044,10 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
   .eco-stats > div,
   .spectrum-card > div {
     padding: 18px;
