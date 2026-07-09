@@ -37,6 +37,7 @@ import {
   X,
 } from "lucide-react";
 import "./styles.css";
+import priyaImg from "./assets/priya.svg";
 
 function playTone(type = "tap", enabled = true) {
   if (!enabled || typeof window === "undefined") return;
@@ -62,7 +63,7 @@ function playTone(type = "tap", enabled = true) {
 
 const stockImages = {
   intro: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1400&q=80",
-  priya: "https://images.unsplash.com/photo-1758876201901-68f8f413bf4c?auto=format&fit=crop&w=1200&q=80",
+  priya: priyaImg,
   map: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
   study: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
   planning: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
@@ -420,6 +421,16 @@ const lessonList = [
   "Exam Lens",
 ];
 
+const sectionGroups = [
+  { label: "Overview", start: 0 },
+  { label: "Lenses", start: 2 },
+  { label: "Focus Areas", start: 4 },
+  { label: "ECO Tasks", start: 5 },
+  { label: "Domains", start: 6 },
+  { label: "Approaches", start: 7 },
+  { label: "Reference", start: 8 },
+];
+
 function ProgressDot({ state = "idle" }) {
   return (
     <span className={`progress-dot ${state}`} aria-hidden="true">
@@ -457,6 +468,39 @@ function TopBar({ soundOn, onToggleSound }) {
         </button>
       </div>
     </header>
+  );
+}
+
+function SectionTabs({ groups, totalSections, activeIndex, completed, isReachable, onSelect }) {
+  const boundaries = groups.map((group, index) => ({
+    ...group,
+    end: index + 1 < groups.length ? groups[index + 1].start - 1 : totalSections - 1,
+  }));
+  const activeGroupIndex = boundaries.findIndex((group) => activeIndex >= group.start && activeIndex <= group.end);
+
+  return (
+    <nav className="section-tabs" aria-label="Lesson sections">
+      <p className="section-tabs-count">Section {activeGroupIndex + 1} of {boundaries.length}</p>
+      <div className="section-tabs-row">
+        {boundaries.map((group, index) => {
+          const done = completed.slice(group.start, group.end + 1).every(Boolean);
+          const isActive = index === activeGroupIndex;
+          const reachable = isReachable(group.start);
+          return (
+            <button
+              key={group.label}
+              type="button"
+              className={`section-tab ${isActive ? "active" : done ? "done" : "locked"}`}
+              onClick={() => reachable && onSelect(group.start)}
+              disabled={!reachable}
+            >
+              {done && !isActive ? <Check size={14} /> : null}
+              <span>{group.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
 
@@ -510,7 +554,7 @@ function SlideModal({ card, onClose }) {
       <motion.article className="slide-modal" variants={modalReveal} initial="hidden" animate="show" exit="exit" onClick={(event) => event.stopPropagation()}>
         <button className="drawer-close" type="button" onClick={onClose} aria-label="Close"><X size={22} /></button>
         <motion.div className="modal-editorial" variants={stagger} initial="hidden" animate="show">
-          <motion.img className="modal-image" src={imageForCard(card)} alt="" variants={fadeUp} />
+          <motion.img className={imageForCard(card) === stockImages.priya ? "modal-image modal-image-illustration" : "modal-image"} src={imageForCard(card)} alt="" variants={fadeUp} />
           <motion.p className="mini-label" variants={fadeUp}>Detail</motion.p>
           <motion.h3 variants={fadeUp}>{card.title}</motion.h3>
           <motion.p variants={fadeUp}>{card.body}</motion.p>
@@ -979,6 +1023,14 @@ function App() {
             )}
           </div>
           <article className="lesson-card">
+            <SectionTabs
+              groups={sectionGroups}
+              totalSections={sections.length}
+              activeIndex={activeIndex}
+              completed={completed}
+              isReachable={(index) => completed[index] || index <= activeIndex}
+              onSelect={setActiveIndex}
+            />
             <AnimatePresence mode="wait">
               <LessonSection section={current} isComplete={completed[activeIndex]} onComplete={() => markComplete(activeIndex)} soundOn={soundOn} />
             </AnimatePresence>
